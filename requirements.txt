@@ -1,0 +1,21 @@
+# Python Router Development Server
+# This server uses only Python standard library modules
+# No additional dependencies required
+
+# Standard library modules used:
+# - http.server (web server)
+# - urllib.request (HTTP client for proxying)
+# - json (JSON parsing)
+# - base64 (credential encoding)
+# - os, sys (system utilities)
+# - threading, time (timing utilities)
+
+# To run the server:
+# python server.py
+
+# Server features:
+# ✅ Serves modified code from ./code directory  
+# ✅ Proxies API calls to router at 192.168.150.1
+# ✅ Handles authentication and session cookies
+# ✅ Logs API requests and responses
+# ✅ No external dependencies required
