@@ -89,23 +89,17 @@ class RouterProxyHandler(http.server.SimpleHTTPRequestHandler):
 
                 if self.path.find("sms_data_total") != -1:
                     try:
-                        cleaned_data = json.dumps(self._clean_sms_data(response_data))
-                        self.send_response(response.getcode())
-                        for header, value in response.headers.items():
-                            self.send_header(header, value)
-                        self.end_headers()
-                        self.wfile.write(cleaned_data.encode("utf-8"))
+                        cleaned_data = json.dumps(
+                            self._clean_sms_data(response_data)
+                        ).encode("utf-8")
+                        self._send_response(response, cleaned_data)
                     except Exception as e:
                         print(f"❌ Error cleaning SMS data: {e}")
                         self.send_error(500, f"Internal Server Error: {str(e)}")
                     return
                 else:
                     # Send response back to client as usual
-                    self.send_response(response.getcode())
-                    for header, value in response.headers.items():
-                        self.send_header(header, value)
-                    self.end_headers()
-                    self.wfile.write(response_data)
+                    self._send_response(response, response_data)
 
                     # Log response for debugging
                     if response_data:
@@ -131,6 +125,14 @@ class RouterProxyHandler(http.server.SimpleHTTPRequestHandler):
         except Exception as e:
             print(f"❌ Proxy error: {str(e)}")
             self.send_error(500, f"Internal Server Error: {str(e)}")
+
+    def _send_response(self, response, data):
+        """Send HTTP response to client with headers and data."""
+        self.send_response(response.getcode())
+        for header, value in response.headers.items():
+            self.send_header(header, value)
+        self.end_headers()
+        self.wfile.write(data)
 
     def _clean_sms_data(self, response_data):
         try:
