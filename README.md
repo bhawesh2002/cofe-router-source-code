@@ -2,8 +2,6 @@
 
 A Python-based local development server for router admin interface development.
 
-Device Link: https://www.cofeonline.com/products/cf-707-cf-707-wf?srsltid=AfmBOoqgzb5vhaqfLbIgtm8sxDvXtn2TGjj0C6jU9Bk0FdSSY-Ldyx70
-
 ## Directory Structure
 
 ```
