@@ -96,22 +96,22 @@ class RouterProxyHandler(http.server.SimpleHTTPRequestHandler):
                         print(f"❌ Error cleaning SMS data: {e}")
                         self.send_error(500, f"Internal Server Error: {str(e)}")
 
-                # Send response back to client as usual
+                # Send response back to client
                 self._send_response(response, response_data)
                 # Log response for debugging
-                if response_data:
-                    try:
-                        if self.path.find("sms_capacity") != -1:
-                            json_data = json.loads(response_data.decode("utf-8"))
-                            print(f"📱 SMS Capacity: {json_data}")
-                        elif self.path.find("sms_cmd_status") != -1:
-                            json_data = json.loads(response_data.decode("utf-8"))
-                            print(f"📱 SMS Status: {json_data}")
-                        elif self.path.find("loginfo") != -1:
-                            json_data = json.loads(response_data.decode("utf-8"))
-                            print(f"🔐 Login Status: {json_data}")
-                    except:
-                        pass
+                # if response_data:
+                #     try:
+                #         if self.path.find("sms_capacity") != -1:
+                #             json_data = json.loads(response_data.decode("utf-8"))
+                #             print(f"📱 SMS Capacity: {json_data}")
+                #         elif self.path.find("sms_cmd_status") != -1:
+                #             json_data = json.loads(response_data.decode("utf-8"))
+                #             print(f"📱 SMS Status: {json_data}")
+                #         elif self.path.find("loginfo") != -1:
+                #             json_data = json.loads(response_data.decode("utf-8"))
+                #             print(f"🔐 Login Status: {json_data}")
+                #     except:
+                #         pass
 
         except urllib.error.HTTPError as e:
             print(f"❌ Router error {e.code}: {e.reason}")
@@ -141,10 +141,6 @@ class RouterProxyHandler(http.server.SimpleHTTPRequestHandler):
             cleaned_data = re.sub(r"[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]", "", text_data)
             # Try parsing the cleaned data
             json_data = json.loads(cleaned_data)
-            print(f"✅ Successfully cleaned and parsed router SMS data")
-            print(
-                f"📱 Router returned {len(json_data.get('messages', []))} SMS messages (cleaned)"
-            )
             return json_data
         except json.JSONDecodeError as json_error:
             print(f"⚠️ JSON parsing failed even after cleaning: {json_error}")
