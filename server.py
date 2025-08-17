@@ -83,74 +83,44 @@ class RouterProxyHandler(http.server.SimpleHTTPRequestHandler):
             # Make request to router
             print(f"🔄 Proxying {method} {self.path} to router...")
 
-            # Check if this is a request for SMS data
-            if self.path.find("sms_data_total") != -1:
-                # Try to get real SMS data first
-                try:
-                    with urllib.request.urlopen(req, timeout=10) as response:
-                        response_data = response.read()
-
-                        # First, try to clean the response data
-                        try:
-                            cleaned_data = self._clean_sms_data(
-                                response_data=response_data
-                            )
-                            print(f"✅ Successfully cleaned and parsed router SMS data")
-                            print(
-                                f"📱 Router returned {len(json_data.get('messages', []))} SMS messages (cleaned)"
-                            )
-                            self.send_response(response.getcode())
-                            for header, value in response.headers.items():
-                                self.send_header(header, value)
-                            self.end_headers()
-                            self.wfile.write(cleaned_data.encode("utf-8"))
-                            return
-
-                        except json.JSONDecodeError as json_error:
-                            print(
-                                f"⚠️ JSON parsing failed even after cleaning: {json_error}"
-                            )
-                            # Save problematic data for analysis
-                            with open("router_sms_debug.txt", "wb") as f:
-                                f.write(response_data)
-                            print(
-                                "💾 Saved problematic router response to 'router_sms_debug.txt' for analysis"
-                            )
-                            raise json_error
-
-                except Exception as sms_error:
-                    print(
-                        f"⚠️ SMS data request failed: {sms_error}, providing sample data"
-                    )
-
             with urllib.request.urlopen(req, timeout=10) as response:
                 # Get response data
                 response_data = response.read()
 
-                # Send response back to client
-                self.send_response(response.getcode())
-
-                # Forward response headers
-                for header, value in response.headers.items():
-                    self.send_header(header, value)
-
-                self.end_headers()
-                self.wfile.write(response_data)
-
-                # Log response for debugging
-                if response_data:
+                if self.path.find("sms_data_total") != -1:
                     try:
-                        if self.path.find("sms_capacity") != -1:
-                            json_data = json.loads(response_data.decode("utf-8"))
-                            print(f"📱 SMS Capacity: {json_data}")
-                        elif self.path.find("sms_cmd_status") != -1:
-                            json_data = json.loads(response_data.decode("utf-8"))
-                            print(f"📱 SMS Status: {json_data}")
-                        elif self.path.find("loginfo") != -1:
-                            json_data = json.loads(response_data.decode("utf-8"))
-                            print(f"🔐 Login Status: {json_data}")
-                    except:
-                        pass
+                        cleaned_data = json.dumps(self._clean_sms_data(response_data))
+                        self.send_response(response.getcode())
+                        for header, value in response.headers.items():
+                            self.send_header(header, value)
+                        self.end_headers()
+                        self.wfile.write(cleaned_data.encode("utf-8"))
+                    except Exception as e:
+                        print(f"❌ Error cleaning SMS data: {e}")
+                        self.send_error(500, f"Internal Server Error: {str(e)}")
+                    return
+                else:
+                    # Send response back to client as usual
+                    self.send_response(response.getcode())
+                    for header, value in response.headers.items():
+                        self.send_header(header, value)
+                    self.end_headers()
+                    self.wfile.write(response_data)
+
+                    # Log response for debugging
+                    if response_data:
+                        try:
+                            if self.path.find("sms_capacity") != -1:
+                                json_data = json.loads(response_data.decode("utf-8"))
+                                print(f"📱 SMS Capacity: {json_data}")
+                            elif self.path.find("sms_cmd_status") != -1:
+                                json_data = json.loads(response_data.decode("utf-8"))
+                                print(f"📱 SMS Status: {json_data}")
+                            elif self.path.find("loginfo") != -1:
+                                json_data = json.loads(response_data.decode("utf-8"))
+                                print(f"🔐 Login Status: {json_data}")
+                        except:
+                            pass
 
         except urllib.error.HTTPError as e:
             print(f"❌ Router error {e.code}: {e.reason}")
