@@ -92,26 +92,13 @@ class RouterProxyHandler(http.server.SimpleHTTPRequestHandler):
 
                         # First, try to clean the response data
                         try:
-                            # Decode with error handling
-                            text_data = response_data.decode("utf-8", errors="replace")
-
-                            # Remove control characters that break JSON parsing
-                            import re
-
-                            # Remove null bytes, control characters except tab, newline, carriage return
-                            cleaned_data = re.sub(
-                                r"[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]", "", text_data
+                            cleaned_data = self._clean_sms_data(
+                                response_data=response_data
                             )
-
-                            # Try parsing the cleaned data
-                            json_data = json.loads(cleaned_data)
-
                             print(f"✅ Successfully cleaned and parsed router SMS data")
-
                             print(
                                 f"📱 Router returned {len(json_data.get('messages', []))} SMS messages (cleaned)"
                             )
-                            # Send cleaned router response
                             self.send_response(response.getcode())
                             for header, value in response.headers.items():
                                 self.send_header(header, value)
@@ -174,6 +161,31 @@ class RouterProxyHandler(http.server.SimpleHTTPRequestHandler):
         except Exception as e:
             print(f"❌ Proxy error: {str(e)}")
             self.send_error(500, f"Internal Server Error: {str(e)}")
+
+    def _clean_sms_data(self, response_data):
+        try:
+            text_data = response_data.decode("utf-8", errors="replace")
+            # Remove control characters that break JSON parsing
+            import re
+
+            # Remove null bytes, control characters except tab, newline, carriage return
+            cleaned_data = re.sub(r"[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]", "", text_data)
+            # Try parsing the cleaned data
+            json_data = json.loads(cleaned_data)
+            print(f"✅ Successfully cleaned and parsed router SMS data")
+            print(
+                f"📱 Router returned {len(json_data.get('messages', []))} SMS messages (cleaned)"
+            )
+            return json_data
+        except json.JSONDecodeError as json_error:
+            print(f"⚠️ JSON parsing failed even after cleaning: {json_error}")
+            # Save problematic data for analysis
+            with open("router_sms_debug.txt", "wb") as f:
+                f.write(response_data)
+            print(
+                "💾 Saved problematic router response to 'router_sms_debug.txt' for analysis"
+            )
+            raise json_error
 
     def log_message(self, format, *args):
         """Custom logging"""
