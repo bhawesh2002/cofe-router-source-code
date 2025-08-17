@@ -89,32 +89,29 @@ class RouterProxyHandler(http.server.SimpleHTTPRequestHandler):
 
                 if self.path.find("sms_data_total") != -1:
                     try:
-                        cleaned_data = json.dumps(
+                        response_data = json.dumps(
                             self._clean_sms_data(response_data)
                         ).encode("utf-8")
-                        self._send_response(response, cleaned_data)
                     except Exception as e:
                         print(f"❌ Error cleaning SMS data: {e}")
                         self.send_error(500, f"Internal Server Error: {str(e)}")
-                    return
-                else:
-                    # Send response back to client as usual
-                    self._send_response(response, response_data)
 
-                    # Log response for debugging
-                    if response_data:
-                        try:
-                            if self.path.find("sms_capacity") != -1:
-                                json_data = json.loads(response_data.decode("utf-8"))
-                                print(f"📱 SMS Capacity: {json_data}")
-                            elif self.path.find("sms_cmd_status") != -1:
-                                json_data = json.loads(response_data.decode("utf-8"))
-                                print(f"📱 SMS Status: {json_data}")
-                            elif self.path.find("loginfo") != -1:
-                                json_data = json.loads(response_data.decode("utf-8"))
-                                print(f"🔐 Login Status: {json_data}")
-                        except:
-                            pass
+                # Send response back to client as usual
+                self._send_response(response, response_data)
+                # Log response for debugging
+                if response_data:
+                    try:
+                        if self.path.find("sms_capacity") != -1:
+                            json_data = json.loads(response_data.decode("utf-8"))
+                            print(f"📱 SMS Capacity: {json_data}")
+                        elif self.path.find("sms_cmd_status") != -1:
+                            json_data = json.loads(response_data.decode("utf-8"))
+                            print(f"📱 SMS Status: {json_data}")
+                        elif self.path.find("loginfo") != -1:
+                            json_data = json.loads(response_data.decode("utf-8"))
+                            print(f"🔐 Login Status: {json_data}")
+                    except:
+                        pass
 
         except urllib.error.HTTPError as e:
             print(f"❌ Router error {e.code}: {e.reason}")
